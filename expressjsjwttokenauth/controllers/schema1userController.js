@@ -1,5 +1,4 @@
 import Usermodel from "../models/schema1user.js";
-//hashing k liye import kr rhe
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import transporter from "../config/emailconfig.js";
@@ -8,10 +7,7 @@ class UserController{
     static userRegistration=async (req,res)=>{
 
         const {name,email,password,password_confirmation,tc}=req.body
-        //isme dekh rhe k agr use registration kr rha tu dekhy jis mail se kr rha wo alrady exists tu ni
-        //aur isme jo 1st email likha wo database me majood email ka name ha aur 2nd email jo wo name field wali
-        //jo new user enter kre ga
-        //dosre ilfaz me ye code dekhne k liye k pehly se registered ha ya ni email
+   
         const user=await Usermodel.findOne({email:email})
         //agr mail match kr jati tu msg de k Email already exits    
         if(user)
@@ -37,14 +33,10 @@ class UserController{
             tc:tc
         })
         await doc.save()
-        //jo user save howa usko find kro abhi aur jwt token bnao uska
         const saved_user=await Usermodel.findOne({email:email})
         //generating jwt token
-        //isme jo saved_user ha wo ha jo abhi save howa aur _id jo db me field ha isme expiresIn 1 property ha
         const token=jwt.sign({userid:saved_user._id},process.env.JWT_SECRET_KEY,{expiresIn:'5d'})
-        //jab ham postman me save kr rhe thay tu data load hoi ja rha tha tu uss loading ko
-        // daur krne k liye ye likhay gay
-        //jo token bnaya client ko bhj du 
+     
         res.send({"status":"success","message":"Registration Successfull","token":token})
             } catch (error) {
                 res.send({"status":"failed","message":"Password and Confirm Password doesnot Match"})
@@ -69,8 +61,7 @@ static login=async (req,res)=>{
         //ye dekh rha k user ha ya ni 
         if(user !=null)
         {
-        //isme password ko db walay password se match kr rhe yaha user.password iss liye likha q k
-        //isme hashpassword save ha jo k db me store howa tha 
+       
           const isMatch=await bcrypt.compare(password,user.password)  
          //isme user.email yani db wali mail == ha ya ni email k aur password match kr rha ya ni
           if((user.email===email) && isMatch)
@@ -123,8 +114,7 @@ static senduserpasswordresetemail=async (req,res)=>{
     const {email}=req.body
     if(email)
     {
-//      find kre k jo email enter ki user ne pasword reset k liye wo db me ha ya ni yani register ha ya ni
-//isme jo 1st email likha wo db me ha name aur 2nd email 
+
       const user=await Usermodel.findOne({email:email})
      
       if(user){
@@ -155,20 +145,12 @@ static senduserpasswordresetemail=async (req,res)=>{
         res.send({"status":"failed","message":"Email field is required"})           
     }
 }
-//ye code submit pr click hone kd chle password ko update krne k liye
-//yani jo link aye ga mail pr uss pr click hone k bd jab user password update kre ga tu yaha se update hoga
 
 static userpasswordreset=async (req,res)=>{
     const {password,password_confirmation}=req.body
-    //ye wala id wo ha jo link se aya 
-    //isme params se id aur token nikal rha
     const {id, token}=req.params
-    //isme wo user aya jisne link pr click kr k password change kia jisne 
-    //reset krna tha pass wo reset hokr yaha aya 
     const user =await Usermodel.findById(id)
-    //yaha new token bna rhe uska jisne link pr click kr password new bnaya
     const new_token=user._id+ process.env.JWT_SECRET_KEY
-    //yaha token verify kr rhe old aur new ko
     try {
         jwt.verify(token,new_token)
     if(password&&password_confirmation){
